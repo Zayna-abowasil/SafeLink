@@ -11,7 +11,6 @@ export const analyzeUrlWithOpenAI = async (url: string) => {
     url.toLowerCase().includes('bad') ||
     url.toLowerCase().includes('login');
 
-  // في حال عدم وجود مفتاح OpenAI أو وجود المفتاح الافتراضي
   if (
     !process.env.OPENAI_API_KEY ||
     process.env.OPENAI_API_KEY === 'your_openai_api_key' ||

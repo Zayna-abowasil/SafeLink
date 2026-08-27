@@ -1,14 +1,11 @@
-# Environment variables (حماية البيانات السرية)
 .env
 *.env
 safeLink-backend/.env
 
-# Dependencies (مجلدات المكتبات)
 node_modules/
 safeLink-backend/node_modules/
 safelink-mobile/node_modules/
 
-# Build outputs & cache
 dist/
 .expo/
 .vscode/

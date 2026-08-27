@@ -49,7 +49,6 @@ export const getAllReports = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// Update Report Status (To complete CRUD requirement)
 export const updateReportStatus = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;

@@ -7,9 +7,9 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  StyleSheet,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config/api';
 
 interface HistoryItem {
@@ -72,14 +72,19 @@ export default function HistoryScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>📜 Scan Logs</Text>
-        <Text style={styles.subtitle}>Audit trail of previously analyzed URLs</Text>
+    <View className="flex-1 bg-slate-950 p-5">
+      <View className="flex-row items-center mb-5">
+        <View className="bg-sky-500/10 p-2 rounded-xl border border-sky-500/20 mr-3">
+          <Ionicons name="time" size={24} color="#38bdf8" />
+        </View>
+        <View>
+          <Text className="text-2xl font-bold text-sky-400">Scan Logs</Text>
+          <Text className="text-xs text-slate-400">Audit trail of previously analyzed URLs</Text>
+        </View>
       </View>
 
       {loading ? (
-        <View style={styles.centerContainer}>
+        <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#38bdf8" />
         </View>
       ) : (
@@ -97,35 +102,56 @@ export default function HistoryScreen() {
             />
           }
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No scans performed yet.</Text>
+            <View className="py-16 items-center">
+              <Ionicons name="folder-open-outline" size={48} color="#475569" />
+              <Text className="text-slate-500 text-sm mt-3">No scans performed yet.</Text>
             </View>
           }
           renderItem={({ item }) => {
             const isMalicious = item.riskScore > 40;
             return (
-              <View style={styles.card}>
-                <View style={styles.cardTop}>
-                  <Text style={styles.urlText} numberOfLines={1}>
-                    {item.url}
-                  </Text>
-                  <View style={[styles.badge, isMalicious ? styles.badgeThreat : styles.badgeSafe]}>
-                    <Text style={[styles.badgeText, isMalicious ? styles.badgeTextThreat : styles.badgeTextSafe]}>
+              <View className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-3">
+                <View className="flex-row justify-between items-start mb-2">
+                  <View className="flex-row items-center flex-1 mr-2">
+                    <Ionicons
+                      name={isMalicious ? 'alert-circle' : 'shield-checkmark'}
+                      size={18}
+                      color={isMalicious ? '#fb7185' : '#34d399'}
+                    />
+                    <Text className="text-slate-50 font-bold text-sm ml-2 flex-1" numberOfLines={1}>
+                      {item.url}
+                    </Text>
+                  </View>
+
+                  <View
+                    className={`px-2.5 py-1 rounded-xl ${
+                      isMalicious ? 'bg-rose-500/20' : 'bg-emerald-500/20'
+                    }`}
+                  >
+                    <Text
+                      className={`text-[11px] font-bold ${
+                        isMalicious ? 'text-rose-400' : 'text-emerald-400'
+                      }`}
+                    >
                       {item.classification || (isMalicious ? 'Threat' : 'Clean')}
                     </Text>
                   </View>
                 </View>
 
-                <View style={styles.cardBottom}>
-                  <Text style={styles.riskText}>
-                    Risk: <Text style={styles.riskValue}>{item.riskScore}/100</Text>
+                <View className="flex-row justify-between items-center mt-2 pt-2 border-t border-slate-800">
+                  <Text className="text-xs text-slate-400">
+                    Risk: <Text className="font-bold text-slate-50">{item.riskScore}/100</Text>
                   </Text>
-                  <View style={styles.actionsRow}>
-                    <Text style={styles.dateText}>
+                  <View className="flex-row items-center">
+                    <Text className="text-[11px] text-slate-500 mr-3">
                       {new Date(item.scanDate).toLocaleDateString()}
                     </Text>
-                    <TouchableOpacity onPress={() => handleDelete(item._id)}>
-                      <Text style={styles.deleteText}>Delete</Text>
+                    <TouchableOpacity
+                      className="flex-row items-center"
+                      onPress={() => handleDelete(item._id)}
+                    >
+                      <Ionicons name="trash-outline" size={14} color="#fb7185" />
+                      <Text className="text-xs text-rose-400 font-bold ml-1">Delete</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -137,110 +163,3 @@ export default function HistoryScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#020617',
-    padding: 20,
-  },
-  header: {
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#38bdf8',
-  },
-  subtitle: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 4,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: '#64748b',
-    fontSize: 14,
-  },
-  card: {
-    backgroundColor: '#0f172a',
-    borderColor: '#1e293b',
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  urlText: {
-    color: '#f8fafc',
-    fontWeight: 'bold',
-    fontSize: 14,
-    flex: 1,
-    marginRight: 8,
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
-  },
-  badgeSafe: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-  },
-  badgeThreat: {
-    backgroundColor: 'rgba(244, 63, 94, 0.2)',
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  badgeTextSafe: {
-    color: '#34d399',
-  },
-  badgeTextThreat: {
-    color: '#fb7185',
-  },
-  cardBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#1e293b',
-  },
-  riskText: {
-    fontSize: 12,
-    color: '#94a3b8',
-  },
-  riskValue: {
-    fontWeight: 'bold',
-    color: '#f8fafc',
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateText: {
-    fontSize: 11,
-    color: '#64748b',
-    marginRight: 12,
-  },
-  deleteText: {
-    fontSize: 12,
-    color: '#fb7185',
-    fontWeight: 'bold',
-  },
-});

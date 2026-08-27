@@ -1,6 +1,8 @@
+import "./global.css";
 import React, { useState } from 'react';
-import { SafeAreaView, StatusBar, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { SafeAreaView, StatusBar, View, Text, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ScanScreen from './src/screens/ScanScreen';
@@ -21,7 +23,7 @@ export default function App() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#020617' }} className="flex-1 bg-slate-950">
         <StatusBar barStyle="light-content" backgroundColor="#020617" />
         {authScreen === 'login' ? (
           <LoginScreen
@@ -39,11 +41,10 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#020617' }} className="flex-1 bg-slate-950">
       <StatusBar barStyle="light-content" backgroundColor="#020617" />
 
-      {/* Main Content Area */}
-      <View style={styles.content}>
+      <View style={{ flex: 1 }} className="flex-1">
         {activeTab === 'scan' && (
           <ScanScreen
             onNavigateToHistory={() => setActiveTab('history')}
@@ -54,69 +55,41 @@ export default function App() {
         {activeTab === 'report' && <ReportScreen />}
       </View>
 
-      {/* Bottom Navigation Bar */}
-      <View style={styles.navBar}>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('scan')}
-        >
-          <Text style={[styles.navText, activeTab === 'scan' && styles.navActiveTextSky]}>
-            🔍 Scanner
+      {/* Bottom Navigation with Vector Icons */}
+      <View className="flex-row justify-between bg-slate-900 border-t border-slate-800 py-2.5 px-5">
+        <TouchableOpacity className="flex-1 items-center" onPress={() => setActiveTab('scan')}>
+          <Ionicons
+            name={activeTab === 'scan' ? "shield-checkmark" : "shield-checkmark-outline"}
+            size={22}
+            color={activeTab === 'scan' ? "#38bdf8" : "#64748b"}
+          />
+          <Text className={`text-[11px] mt-1 font-bold ${activeTab === 'scan' ? 'text-sky-400' : 'text-slate-500'}`}>
+            Scanner
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('history')}
-        >
-          <Text style={[styles.navText, activeTab === 'history' && styles.navActiveTextSky]}>
-            📜 History
+        <TouchableOpacity className="flex-1 items-center" onPress={() => setActiveTab('history')}>
+          <Ionicons
+            name={activeTab === 'history' ? "time" : "time-outline"}
+            size={22}
+            color={activeTab === 'history' ? "#38bdf8" : "#64748b"}
+          />
+          <Text className={`text-[11px] mt-1 font-bold ${activeTab === 'history' ? 'text-sky-400' : 'text-slate-500'}`}>
+            History
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('report')}
-        >
-          <Text style={[styles.navText, activeTab === 'report' && styles.navActiveTextRose]}>
-            🚩 Report
+        <TouchableOpacity className="flex-1 items-center" onPress={() => setActiveTab('report')}>
+          <Ionicons
+            name={activeTab === 'report' ? "flag" : "flag-outline"}
+            size={22}
+            color={activeTab === 'report' ? "#fb7185" : "#64748b"}
+          />
+          <Text className={`text-[11px] mt-1 font-bold ${activeTab === 'report' ? 'text-rose-400' : 'text-slate-500'}`}>
+            Report
           </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#020617',
-  },
-  content: {
-    flex: 1,
-  },
-  navBar: {
-    flexDirection: 'row',
-    backgroundColor: '#0f172a',
-    borderTopWidth: 1,
-    borderTopColor: '#1e293b',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
-  },
-  navItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  navText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#64748b',
-  },
-  navActiveTextSky: {
-    color: '#38bdf8',
-  },
-  navActiveTextRose: {
-    color: '#fb7185',
-  },
-});

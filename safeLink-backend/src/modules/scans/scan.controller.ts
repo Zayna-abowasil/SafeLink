@@ -46,8 +46,6 @@ export const getScanHistory = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: 'Failed to retrieve scan history', error });
     }
 };
-
-// Delete Scan (To complete CRUD requirement)
 export const deleteScan = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;

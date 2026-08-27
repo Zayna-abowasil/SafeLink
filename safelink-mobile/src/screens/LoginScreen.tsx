@@ -9,9 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config/api';
 
 interface LoginScreenProps {
@@ -22,6 +22,7 @@ interface LoginScreenProps {
 export default function LoginScreen({ onLoginSuccess, onNavigateToRegister }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -35,7 +36,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToRegister }: Lo
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
 
       const data = await response.json();
@@ -60,62 +61,81 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToRegister }: Lo
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-slate-950"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>🛡️ SafeLink</Text>
-          <Text style={styles.subtitle}>Threat Intelligence & Link Security</Text>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
+        <View className="items-center mb-8">
+          <View className="bg-sky-500/10 p-4 rounded-3xl border border-sky-500/20 mb-3">
+            <Ionicons name="shield-checkmark" size={44} color="#38bdf8" />
+          </View>
+          <Text className="text-3xl font-black text-sky-400 tracking-wider">SafeLink</Text>
+          <Text className="text-xs text-slate-400 mt-1.5">Threat Intelligence & Link Security</Text>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Welcome Back</Text>
-          <Text style={styles.cardSubtitle}>Sign in to your account</Text>
+        <View className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+          <Text className="text-xl font-bold text-slate-50 mb-1">Welcome Back</Text>
+          <Text className="text-xs text-slate-400 mb-6">Sign in to your account</Text>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="operator@safelink.io"
-              placeholderTextColor="#64748b"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+          <View className="mb-4">
+            <Text className="text-xs font-semibold text-slate-300 mb-2">Email Address</Text>
+            <View className="flex-row items-center bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3">
+              <Ionicons name="mail-outline" size={18} color="#64748b" className="mr-2" />
+              <TextInput
+                className="flex-1 text-slate-50 text-sm ml-2"
+                placeholder="operator@safelink.io"
+                placeholderTextColor="#64748b"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••••••"
-              placeholderTextColor="#64748b"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
+          <View className="mb-6">
+            <Text className="text-xs font-semibold text-slate-300 mb-2">Password</Text>
+            <View className="flex-row items-center bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3">
+              <Ionicons name="lock-closed-outline" size={18} color="#64748b" className="mr-2" />
+              <TextInput
+                className="flex-1 text-slate-50 text-sm ml-2"
+                placeholder="••••••••••••"
+                placeholderTextColor="#64748b"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color="#64748b"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity
-            style={styles.button}
+            className="bg-sky-600 rounded-xl py-3.5 flex-row items-center justify-center space-x-2"
             onPress={handleLogin}
             disabled={isLoading}
           >
             {isLoading ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
+              <>
+                <Text className="text-white font-bold text-base mr-2">Sign In</Text>
+                <Ionicons name="log-in-outline" size={20} color="#ffffff" />
+              </>
             )}
           </TouchableOpacity>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+          <View className="flex-row justify-center mt-6">
+            <Text className="text-slate-400 text-sm">Don't have an account? </Text>
             <TouchableOpacity onPress={onNavigateToRegister}>
-              <Text style={styles.footerLink}>Create Account</Text>
+              <Text className="text-sky-400 font-bold text-sm">Create Account</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -123,98 +143,3 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToRegister }: Lo
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#020617',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#38bdf8',
-    letterSpacing: 1.5,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#94a3b8',
-    marginTop: 6,
-  },
-  card: {
-    backgroundColor: '#0f172a',
-    borderColor: '#1e293b',
-    borderWidth: 1,
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#f8fafc',
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginBottom: 24,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#cbd5e1',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#020617',
-    borderColor: '#334155',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: '#f8fafc',
-    fontSize: 14,
-  },
-  button: {
-    backgroundColor: '#0284c7',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
-  },
-  footerText: {
-    color: '#94a3b8',
-    fontSize: 14,
-  },
-  footerLink: {
-    color: '#38bdf8',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-});

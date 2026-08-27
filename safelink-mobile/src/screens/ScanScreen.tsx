@@ -7,9 +7,9 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  StyleSheet,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config/api';
 
 interface ScanResult {
@@ -66,7 +66,6 @@ export default function ScanScreen({ onNavigateToHistory, onLogout }: ScanScreen
         isSafe: scanData.classification === 'Safe',
       });
     } catch (error: any) {
-      console.error('Scan Error:', error);
       Alert.alert('Scan Failed', error.message || 'Unable to analyze the URL.');
     } finally {
       setIsLoading(false);
@@ -74,260 +73,125 @@ export default function ScanScreen({ onNavigateToHistory, onLogout }: ScanScreen
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>🛡️ SafeLink AI</Text>
-          <Text style={styles.subtitle}>Real-Time Threat Scanner</Text>
+    <ScrollView className="flex-1 bg-slate-950" contentContainerStyle={{ padding: 20 }}>
+      {/* Header */}
+      <View className="flex-row justify-between items-center mb-6">
+        <View className="flex-row items-center">
+          <View className="bg-sky-500/10 p-2 rounded-xl border border-sky-500/20 mr-3">
+            <Ionicons name="shield-checkmark" size={24} color="#38bdf8" />
+          </View>
+          <View>
+            <Text className="text-2xl font-bold text-sky-400">SafeLink AI</Text>
+            <Text className="text-xs text-slate-400">Real-Time Threat Scanner</Text>
+          </View>
         </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-          <Text style={styles.logoutText}>Logout</Text>
+
+        <TouchableOpacity
+          className="bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 flex-row items-center space-x-1"
+          onPress={onLogout}
+        >
+          <Ionicons name="log-out-outline" size={16} color="#fb7185" />
+          <Text className="text-xs text-rose-400 font-semibold ml-1">Logout</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Analyze Target URL</Text>
-        <Text style={styles.cardSubtitle}>Paste suspicious link below to scan with OpenAI models</Text>
+      {/* Input Card */}
+      <View className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-5">
+        <Text className="text-base font-bold text-slate-50 mb-1">Analyze Target URL</Text>
+        <Text className="text-xs text-slate-400 mb-4">Paste suspicious link below to scan with OpenAI models</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="https://secure-account-update.xyz/login"
-          placeholderTextColor="#64748b"
-          value={url}
-          onChangeText={setUrl}
-          autoCapitalize="none"
-          keyboardType="url"
-          autoCorrect={false}
-        />
+        <View className="flex-row items-center bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 mb-4">
+          <Ionicons name="link-outline" size={18} color="#64748b" />
+          <TextInput
+            className="flex-1 text-slate-50 text-sm ml-2"
+            placeholder="https://secure-account-update.xyz/login"
+            placeholderTextColor="#64748b"
+            value={url}
+            onChangeText={setUrl}
+            autoCapitalize="none"
+            keyboardType="url"
+            autoCorrect={false}
+          />
+        </View>
 
-        <TouchableOpacity style={styles.scanButton} onPress={handleScan} disabled={isLoading}>
+        <TouchableOpacity
+          className="bg-sky-600 rounded-xl py-3.5 flex-row items-center justify-center space-x-2"
+          onPress={handleScan}
+          disabled={isLoading}
+        >
           {isLoading ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text style={styles.scanButtonText}>Run AI Security Scan</Text>
+            <>
+              <Ionicons name="scan-outline" size={20} color="#ffffff" />
+              <Text className="text-white font-bold text-base ml-2">Run AI Security Scan</Text>
+            </>
           )}
         </TouchableOpacity>
       </View>
 
+      
       {result && (
-        <View style={[styles.resultCard, result.isSafe ? styles.resultCardSafe : styles.resultCardThreat]}>
-          <View style={styles.resultHeader}>
-            <Text style={styles.resultVerdictTitle}>Security Verdict</Text>
-            <View style={[styles.badge, result.isSafe ? styles.badgeSafe : styles.badgeThreat]}>
-              <Text style={[styles.badgeText, result.isSafe ? styles.badgeTextSafe : styles.badgeTextThreat]}>
+        <View
+          className={`rounded-2xl p-5 border mb-6 ${
+            result.isSafe ? 'bg-emerald-950/30 border-emerald-500' : 'bg-rose-950/30 border-rose-500'
+          }`}
+        >
+          <View className="flex-row justify-between items-center mb-4">
+            <View className="flex-row items-center">
+              <Ionicons
+                name={result.isSafe ? 'checkmark-circle' : 'warning'}
+                size={20}
+                color={result.isSafe ? '#34d399' : '#fb7185'}
+              />
+              <Text className="text-sm font-bold text-slate-200 ml-2">Security Verdict</Text>
+            </View>
+
+            <View
+              className={`px-3 py-1 rounded-full ${
+                result.isSafe ? 'bg-emerald-500/20' : 'bg-rose-500/20'
+              }`}
+            >
+              <Text
+                className={`text-xs font-bold ${
+                  result.isSafe ? 'text-emerald-400' : 'text-rose-400'
+                }`}
+              >
                 {result.isSafe ? 'SAFE LINK' : 'THREAT DETECTED'}
               </Text>
             </View>
           </View>
 
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Risk Score</Text>
-              <Text style={[styles.statValue, result.riskScore > 40 ? styles.statValueThreat : styles.statValueSafe]}>
+          <View className="flex-row mb-4">
+            <View className="flex-1 bg-slate-900/80 rounded-xl p-3 mr-2 border border-slate-800">
+              <Text className="text-[11px] text-slate-400">Risk Score</Text>
+              <Text
+                className={`text-xl font-black mt-1 ${
+                  result.riskScore > 40 ? 'text-rose-400' : 'text-emerald-400'
+                }`}
+              >
                 {result.riskScore}/100
               </Text>
             </View>
 
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Classification</Text>
-              <Text style={styles.statValueText}>{result.classification}</Text>
+            <View className="flex-1 bg-slate-900/80 rounded-xl p-3 border border-slate-800">
+              <Text className="text-[11px] text-slate-400">Classification</Text>
+              <Text className="text-sm font-bold text-slate-50 mt-1">{result.classification}</Text>
             </View>
           </View>
 
-          <Text style={styles.aiLabel}>AI Intelligence Brief:</Text>
-          <Text style={styles.aiExplanation}>{result.aiExplanation}</Text>
+          <Text className="text-xs font-semibold text-slate-300 mb-1">AI Intelligence Brief:</Text>
+          <Text className="text-xs text-slate-400 leading-5">{result.aiExplanation}</Text>
         </View>
       )}
 
-      <TouchableOpacity style={styles.historyNavButton} onPress={onNavigateToHistory}>
-        <Text style={styles.historyNavText}>📜 View Scan History</Text>
+      <TouchableOpacity
+        className="bg-slate-900 border border-slate-800 rounded-xl py-3.5 flex-row items-center justify-center mb-8"
+        onPress={onNavigateToHistory}
+      >
+        <Ionicons name="time-outline" size={18} color="#cbd5e1" />
+        <Text className="text-slate-300 font-semibold text-sm ml-2">View Scan History</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#020617',
-  },
-  content: {
-    padding: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#38bdf8',
-  },
-  subtitle: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 2,
-  },
-  logoutButton: {
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  logoutText: {
-    fontSize: 12,
-    color: '#fb7185',
-    fontWeight: '600',
-  },
-  card: {
-    backgroundColor: '#0f172a',
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#f8fafc',
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginBottom: 16,
-  },
-  input: {
-    backgroundColor: '#020617',
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: '#f8fafc',
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  scanButton: {
-    backgroundColor: '#0284c7',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scanButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  resultCard: {
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    marginBottom: 24,
-  },
-  resultCardSafe: {
-    backgroundColor: 'rgba(6, 78, 59, 0.3)',
-    borderColor: '#10b981',
-  },
-  resultCardThreat: {
-    backgroundColor: 'rgba(136, 19, 55, 0.3)',
-    borderColor: '#f43f5e',
-  },
-  resultHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  resultVerdictTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#e2e8f0',
-  },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  badgeSafe: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-  },
-  badgeThreat: {
-    backgroundColor: 'rgba(244, 63, 94, 0.2)',
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  badgeTextSafe: {
-    color: '#34d399',
-  },
-  badgeTextThreat: {
-    color: '#fb7185',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  statBox: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
-    borderRadius: 12,
-    padding: 12,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-  },
-  statLabel: {
-    fontSize: 11,
-    color: '#94a3b8',
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: '900',
-    marginTop: 4,
-  },
-  statValueSafe: {
-    color: '#34d399',
-  },
-  statValueThreat: {
-    color: '#fb7185',
-  },
-  statValueText: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#f8fafc',
-    marginTop: 4,
-  },
-  aiLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#cbd5e1',
-    marginBottom: 4,
-  },
-  aiExplanation: {
-    fontSize: 12,
-    color: '#94a3b8',
-    lineHeight: 18,
-  },
-  historyNavButton: {
-    backgroundColor: '#0f172a',
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  historyNavText: {
-    color: '#cbd5e1',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-});

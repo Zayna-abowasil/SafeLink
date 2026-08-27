@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Text,
   View,
@@ -8,18 +8,59 @@ import {
   Alert,
   ScrollView,
   Image,
-  StyleSheet,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config/api';
 
+interface ScannedLink {
+  _id: string;
+  url: string;
+  classification: string;
+}
+
 export default function ReportScreen() {
-  const [scanId, setScanId] = useState('');
+  const [scans, setScans] = useState<ScannedLink[]>([]);
+  const [selectedScanId, setSelectedScanId] = useState('');
+  const [selectedScanUrl, setSelectedScanUrl] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [loadingScans, setLoadingScans] = useState(true);
+
   const [reason, setReason] = useState<'Phishing' | 'Malware' | 'Inappropriate content'>('Phishing');
   const [comments, setComments] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // جلب الفحوصات السابقة لاختيار الرابط منها
+  const fetchScannedLinks = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const response = await fetch(`${API_BASE_URL}/scans/history`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const data = await response.json();
+      if (response.ok && data.scans) {
+        setScans(data.scans);
+        if (data.scans.length > 0) {
+          setSelectedScanId(data.scans[0]._id);
+          setSelectedScanUrl(data.scans[0].url);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load scans:', error);
+    } finally {
+      setLoadingScans(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchScannedLinks();
+  }, []);
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -40,8 +81,8 @@ export default function ReportScreen() {
   };
 
   const handleReportSubmit = async () => {
-    if (!scanId.trim()) {
-      Alert.alert('Validation Error', 'Please provide a valid Scan ID.');
+    if (!selectedScanId) {
+      Alert.alert('Validation Error', 'Please select a scanned link to report.');
       return;
     }
 
@@ -49,7 +90,7 @@ export default function ReportScreen() {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const formData = new FormData();
-      formData.append('scanId', scanId.trim());
+      formData.append('scanId', selectedScanId);
       formData.append('reason', reason);
       formData.append('comments', comments);
 
@@ -78,8 +119,7 @@ export default function ReportScreen() {
         throw new Error(data.message || 'Failed to submit report');
       }
 
-      Alert.alert('Report Submitted', 'The report and screenshot have been uploaded to Cloudinary.');
-      setScanId('');
+      Alert.alert('Report Submitted', 'The threat report has been registered successfully.');
       setComments('');
       setImageUri(null);
     } catch (error: any) {
@@ -90,42 +130,98 @@ export default function ReportScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>🚩 Threat Dispatch</Text>
-        <Text style={styles.subtitle}>Report phishing scans and malicious campaigns</Text>
+    <ScrollView className="flex-1 bg-slate-950" contentContainerStyle={{ padding: 20 }}>
+      {/* Header */}
+      <View className="flex-row items-center mb-6">
+        <View className="bg-rose-500/10 p-2 rounded-xl border border-rose-500/20 mr-3">
+          <Ionicons name="flag" size={24} color="#fb7185" />
+        </View>
+        <View>
+          <Text className="text-2xl font-bold text-rose-400">Threat Dispatch</Text>
+          <Text className="text-xs text-slate-400">Report suspicious links and threats</Text>
+        </View>
       </View>
 
-      <View style={styles.card}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Target Scan ID</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Paste scan ObjectId here..."
-            placeholderTextColor="#64748b"
-            value={scanId}
-            onChangeText={setScanId}
-            autoCapitalize="none"
-          />
+      <View className="bg-slate-900 border border-slate-800 rounded-3xl p-5 mb-8">
+        <View className="mb-4">
+          <Text className="text-xs font-semibold text-slate-300 mb-2">Select Scanned Link</Text>
+          {loadingScans ? (
+            <ActivityIndicator color="#38bdf8" className="py-2" />
+          ) : scans.length === 0 ? (
+            <View className="bg-slate-950 border border-slate-800 rounded-xl p-3">
+              <Text className="text-xs text-slate-500">No scanned links found. Run a scan first.</Text>
+            </View>
+          ) : (
+            <View>
+              <TouchableOpacity
+                className="flex-row items-center justify-between bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3"
+                onPress={() => setShowDropdown(!showDropdown)}
+              >
+                <View className="flex-row items-center flex-1 mr-2">
+                  <Ionicons name="link-outline" size={18} color="#38bdf8" />
+                  <Text className="text-slate-50 text-sm ml-2" numberOfLines={1}>
+                    {selectedScanUrl || 'Select link to report'}
+                  </Text>
+                </View>
+                <Ionicons
+                  name={showDropdown ? 'chevron-up' : 'chevron-down'}
+                  size={18}
+                  color="#94a3b8"
+                />
+              </TouchableOpacity>
+
+              {showDropdown && (
+                <View className="bg-slate-950 border border-slate-800 rounded-xl mt-1.5 overflow-hidden max-h-48">
+                  <ScrollView nestedScrollEnabled>
+                    {scans.map((item) => (
+                      <TouchableOpacity
+                        key={item._id}
+                        className={`p-3 border-b border-slate-800/60 flex-row justify-between items-center ${
+                          selectedScanId === item._id ? 'bg-sky-950/40' : ''
+                        }`}
+                        onPress={() => {
+                          setSelectedScanId(item._id);
+                          setSelectedScanUrl(item.url);
+                          setShowDropdown(false);
+                        }}
+                      >
+                        <Text
+                          className={`text-xs flex-1 mr-2 ${
+                            selectedScanId === item._id ? 'text-sky-400 font-bold' : 'text-slate-300'
+                          }`}
+                          numberOfLines={1}
+                        >
+                          {item.url}
+                        </Text>
+                        <Text className="text-[10px] text-slate-500 font-semibold">
+                          {item.classification}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Reason</Text>
-          <View style={styles.reasonRow}>
+        <View className="mb-4">
+          <Text className="text-xs font-semibold text-slate-300 mb-2">Threat Reason</Text>
+          <View className="flex-row justify-between">
             {(['Phishing', 'Malware', 'Inappropriate content'] as const).map((r) => (
               <TouchableOpacity
                 key={r}
                 onPress={() => setReason(r)}
-                style={[
-                  styles.reasonBtn,
-                  reason === r ? styles.reasonBtnActive : styles.reasonBtnInactive,
-                ]}
+                className={`py-2 px-2.5 rounded-xl border ${
+                  reason === r
+                    ? 'bg-rose-500/20 border-rose-500'
+                    : 'bg-slate-950 border-slate-700'
+                }`}
               >
                 <Text
-                  style={[
-                    styles.reasonText,
-                    reason === r ? styles.reasonTextActive : styles.reasonTextInactive,
-                  ]}
+                  className={`text-[11px] ${
+                    reason === r ? 'text-rose-400 font-bold' : 'text-slate-400'
+                  }`}
                 >
                   {r}
                 </Text>
@@ -134,11 +230,11 @@ export default function ReportScreen() {
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Incident Details / Comments</Text>
+        <View className="mb-4">
+          <Text className="text-xs font-semibold text-slate-300 mb-2">Incident Details / Comments</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Describe the deceptive behavior, email sender, etc..."
+            className="bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-50 text-sm h-24"
+            placeholder="Describe why this link is dangerous..."
             placeholderTextColor="#64748b"
             value={comments}
             onChangeText={setComments}
@@ -147,141 +243,39 @@ export default function ReportScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.attachBtn} onPress={pickImage}>
-          <Text style={styles.attachText}>
-            {imageUri ? '📸 Screenshot Attached (Tap to Change)' : '📎 Attach Evidence Screenshot'}
+        <TouchableOpacity
+          className="border border-dashed border-sky-400 rounded-xl py-3.5 flex-row items-center justify-center mb-4 bg-sky-950/20"
+          onPress={pickImage}
+        >
+          <Ionicons
+            name={imageUri ? 'image' : 'attach-outline'}
+            size={18}
+            color="#38bdf8"
+          />
+          <Text className="text-sky-400 font-semibold text-xs ml-2">
+            {imageUri ? 'Screenshot Attached (Tap to Change)' : 'Attach Evidence Screenshot'}
           </Text>
         </TouchableOpacity>
 
-        {imageUri && <Image source={{ uri: imageUri }} style={styles.previewImage} />}
+        {imageUri && (
+          <Image source={{ uri: imageUri }} className="w-full h-40 rounded-xl mb-4" />
+        )}
 
         <TouchableOpacity
-          style={styles.submitBtn}
+          className="bg-rose-600 rounded-xl py-3.5 flex-row items-center justify-center space-x-2"
           onPress={handleReportSubmit}
           disabled={submitting}
         >
           {submitting ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text style={styles.submitText}>Submit Threat Report</Text>
+            <>
+              <Ionicons name="send" size={18} color="#ffffff" />
+              <Text className="text-white font-bold text-base ml-2">Submit Threat Report</Text>
+            </>
           )}
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#020617',
-  },
-  content: {
-    padding: 20,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fb7185',
-  },
-  subtitle: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 4,
-  },
-  card: {
-    backgroundColor: '#0f172a',
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 32,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#cbd5e1',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#020617',
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: '#f8fafc',
-    fontSize: 14,
-  },
-  textArea: {
-    height: 90,
-  },
-  reasonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  reasonBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  reasonBtnActive: {
-    backgroundColor: 'rgba(244, 63, 94, 0.2)',
-    borderColor: '#f43f5e',
-  },
-  reasonBtnInactive: {
-    backgroundColor: '#020617',
-    borderColor: '#334155',
-  },
-  reasonText: {
-    fontSize: 11,
-  },
-  reasonTextActive: {
-    color: '#fb7185',
-    fontWeight: 'bold',
-  },
-  reasonTextInactive: {
-    color: '#94a3b8',
-  },
-  attachBtn: {
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#38bdf8',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    backgroundColor: 'rgba(2, 132, 199, 0.1)',
-  },
-  attachText: {
-    color: '#38bdf8',
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  previewImage: {
-    width: '100%',
-    height: 160,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  submitBtn: {
-    backgroundColor: '#e11d48',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-});
