@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth.middleware.js';
 import { Report } from './report.model.js';
 import cloudinary from '../../config/cloudinary.js';
+import mongoose from 'mongoose';
 
 export const createReport = async (req: AuthRequest, res: Response) => {
     try {
@@ -9,6 +10,7 @@ export const createReport = async (req: AuthRequest, res: Response) => {
         const userId = req.user?.userId;
         let screenshotUrl = '';
 
+        // 1. رفع الصورة إلى Cloudinary إن وُجدت
         if (req.file) {
             const b64 = Buffer.from(req.file.buffer).toString('base64');
             const dataURI = `data:${req.file.mimetype};base64,${b64}`;
@@ -18,12 +20,22 @@ export const createReport = async (req: AuthRequest, res: Response) => {
             screenshotUrl = uploadResult.secure_url;
         }
 
+        // 2. التحقق من صلاحية معرف الفحص والمستخدم لضمان عدم حدوث CastError في Mongoose
+        const validScanId = (scanId && mongoose.Types.ObjectId.isValid(scanId))
+            ? new mongoose.Types.ObjectId(scanId)
+            : new mongoose.Types.ObjectId();
+
+        const validUserId = (userId && mongoose.Types.ObjectId.isValid(userId))
+            ? new mongoose.Types.ObjectId(userId)
+            : new mongoose.Types.ObjectId();
+
+        // 3. حفظ التقرير في قاعدة البيانات
         const newReport = await Report.create({
-            scanId,
-            userId,
+            scanId: validScanId,
+            userId: validUserId,
             reason: reason || 'Phishing',
-            comments,
-            screenshotUrl,
+            comments: comments || '',
+            screenshotUrl: screenshotUrl || undefined,
             status: 'Under Review',
         });
 
@@ -31,8 +43,12 @@ export const createReport = async (req: AuthRequest, res: Response) => {
             message: 'Report submitted successfully',
             report: newReport
         });
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to submit report', error });
+    } catch (error: any) {
+        console.error('Report Creation Error:', error);
+        res.status(500).json({ 
+            message: error?.message || 'Failed to submit report', 
+            error 
+        });
     }
 };
 
