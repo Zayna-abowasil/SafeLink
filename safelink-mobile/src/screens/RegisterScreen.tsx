@@ -1,3 +1,6 @@
+//מסך רישום משתמש חדש. כולל שדות קלט עבור שם מלא, אימייל וסיסמה, מאמת את תקינות ההזנה ושולח בקשת 
+// POST לשרת. בסיום מוצלח מנחה את המשתמש להתחבר ומעביר אותו למסך ההתחברות.
+
 import React, { useState } from 'react';
 import {
   Text,
@@ -13,26 +16,43 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config/api';
 
+// ממשק TypeScript שמגדיר את סוגי הפרופס שהמסך מקבל
 interface RegisterScreenProps {
+  // פונקציה שמופעלת כאשר ההרשמה מצליחה, ומאפשרת ניווט למסך ההתחברות
   onRegisterSuccess: () => void;
+  // פונקציה שמופעלת כאשר המשתמש רוצה לעבור למסך ההתחברות
   onNavigateToLogin: () => void;
 }
 
+// פונקציה React שמייצגת את מסך הרישום
 export default function RegisterScreen({ onRegisterSuccess, onNavigateToLogin }: RegisterScreenProps) {
+  // הגדרת מצבים (States) לניהול שדות הקלט, מצב הצגת הסיסמה ומצב טעינה
   const [name, setName] = useState('');
+  // הגדרת מצב לניהול שדה האימייל
   const [email, setEmail] = useState('');
+  // הגדרת מצב לניהול שדה הסיסמה
   const [password, setPassword] = useState('');
+  // מצב שמציין אם הסיסמה מוצגת או מוסתרת
   const [showPassword, setShowPassword] = useState(false);
+  // מצב שמציין אם הבקשה לשרת נמצאת בתהליך טעינה
   const [isLoading, setIsLoading] = useState(false);
 
+  // פונקציה אסינכרונית שמטפלת בתהליך הרישום
   const handleRegister = async () => {
+    // בדיקה אם אחד משדות הקלט ריק, ואם כן מציג הודעת שגיאה למשתמש ומפסיק את התהליך
     if (!name.trim() || !email.trim() || !password.trim()) {
       Alert.alert('Validation Error', 'Please fill in all fields.');
       return;
     }
-
+    // בדיקה אם הסיסמה קצרה מדי, ואם כן מציג הודעת שגיאה למשתמש ומפסיק את התהליך
+    if (password.length < 6) {
+      Alert.alert('Validation Error', 'Password must be at least 6 characters long.');
+      return;
+    }
+    // עדכון מצב הטעינה כדי להציג אינדיקטור טעינה למשתמש בזמן שהבקשה לשרת מתבצעת
     setIsLoading(true);
     try {
+      // ביצוע בקשת Fetch לשרת ה-Backend עם פרטי הרישום שהוזנו על ידי המשתמש
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -45,23 +65,26 @@ export default function RegisterScreen({ onRegisterSuccess, onNavigateToLogin }:
           password,
         }),
       });
-
+      // המרת התשובה ל-JSON ובדיקת הצלחת הבקשה. אם הבקשה נכשלה, זורק שגיאה עם הודעה מתאימה
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.message || 'Registration failed');
       }
-
+      // אם הבקשה הצליחה, מציג הודעת הצלחה למשתמש ומפעיל את הפונקציה onRegisterSuccess כדי לנווט למסך ההתחברות
       Alert.alert('Success', 'Account created successfully! Please sign in.');
       onRegisterSuccess();
+      // אם הבקשה נכשלה, מציג הודעת שגיאה למשתמש עם ההודעה שהתקבלה מהשרת או הודעה כללית
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message || 'Unable to connect to the server.');
     } finally {
+      // בסיום הבקשה, גם אם נכשלה, מעדכן את מצב הטעינה כדי להפסיק את האנימציה של אינדיקטור הטעינה
       setIsLoading(false);
     }
   };
 
   return (
+    /* למניעת הסתרת שדות על ידי המקלדת */
     <KeyboardAvoidingView
       className="flex-1 bg-slate-950"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -124,6 +147,7 @@ export default function RegisterScreen({ onRegisterSuccess, onNavigateToLogin }:
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
               />
+              {/* כפתור שמאפשר למשתמש להציג או להסתיר את הסיסמה שהוזנה בשדה הסיסמה */}
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -133,7 +157,8 @@ export default function RegisterScreen({ onRegisterSuccess, onNavigateToLogin }:
               </TouchableOpacity>
             </View>
           </View>
-
+          
+          {/* כפתור יצירת חשבון שמפעיל את הפונקציה handleRegister בעת לחיצה, ומציג אינדיקטור טעינה בזמן שהבקשה לשרת מתבצעת */}
           <TouchableOpacity
             className="bg-sky-600 rounded-xl py-3.5 flex-row items-center justify-center space-x-2"
             onPress={handleRegister}

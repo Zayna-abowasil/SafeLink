@@ -1,3 +1,8 @@
+//מסך התחברות המשתמש. מאפשר הזנת מייל וסיסמה, הצגה/הסתרה של הסיסמה, ופנייה ל-
+// API. בהתחברות מוצלחת
+// , האסימון ופרטי המשתמש נשמרים ב-AsyncStorage והמשתמש מועבר למסך הראשי
+
+// מסך זה מקבל פונקציות props שמאפשרות ניווט למסך הרשמה או למסך הראשי לאחר התחברות מוצלחת.
 import React, { useState } from 'react';
 import {
   Text,
@@ -14,56 +19,72 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config/api';
 
+//מקבל ב-Props את הפונקציות
 interface LoginScreenProps {
+  // פונקציה שמופעלת כאשר ההתחברות מצליחה, ומאפשרת ניווט למסך הראשי
   onLoginSuccess: () => void;
+  // פונקציה שמופעלת כאשר המשתמש רוצה לעבור למסך ההרשמה
   onNavigateToRegister: () => void;
 }
 
+// פונקציה React שמייצגת את מסך ההתחברות
 export default function LoginScreen({ onLoginSuccess, onNavigateToRegister }: LoginScreenProps) {
+  // הגדרת מצב לניהול שדה המייל
   const [email, setEmail] = useState('');
+  // הגדרת מצב לניהול שדה הסיסמה
   const [password, setPassword] = useState('');
+  // מצב שמציין אם הסיסמה מוצגת או מוסתרת
   const [showPassword, setShowPassword] = useState(false);
+  // מצב שמציין אם הבקשה לשרת נמצאת בתהליך טעינה
   const [isLoading, setIsLoading] = useState(false);
 
+  // פונקציה אסינכרונית שמטפלת בתהליך ההתחברות
   const handleLogin = async () => {
+    // בדיקה אם שדות המייל והסיסמה ריקים, ואם כן מציג הודעת שגיאה למשתמש ומפסיק את התהליך
     if (!email.trim() || !password.trim()) {
       Alert.alert('Validation Error', 'Please enter your email and password.');
       return;
     }
-
+    // עדכון מצב הטעינה כדי להציג אינדיקטור טעינה למשתמש בזמן שהבקשה לשרת מתבצעת
     setIsLoading(true);
     try {
+      // ביצוע בקשת Fetch לשרת ה-Backend עם פרטי ההתחברות שהוזנו על ידי המשתמש
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
-
+      // המרת התשובה ל-JSON ובדיקת הצלחת הבקשה. אם הבקשה נכשלה, זורק שגיאה עם הודעה מתאימה
       const data = await response.json();
-
+      // אם הבקשה נכשלה, זורק שגיאה עם הודעה מתאימה
       if (!response.ok) {
         throw new Error(data.message || 'Invalid email or password.');
       }
-
+      // אם הבקשה הצליחה, שומר את הטוקן ופרטי המשתמש ב-AsyncStorage כדי לשמור את מצב ההתחברות
       await AsyncStorage.setItem('userToken', data.token);
+      // אם יש פרטי משתמש, שומר אותם גם ב-AsyncStorage
       if (data.user) {
         await AsyncStorage.setItem('userData', JSON.stringify(data.user));
       }
-
+      // מציג הודעת הצלחה למשתמש ומפעיל את הפונקציה onLoginSuccess כדי לנווט למסך הראשי
       Alert.alert('Success', 'Welcome back!');
       onLoginSuccess();
+      // אם הבקשה נכשלה, מציג הודעת שגיאה למשתמש עם ההודעה שהתקבלה מהשרת או הודעה כללית
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Unable to connect to the server.');
+      // מדפיס את השגיאה לטרמינל לצורך ניפוי באגים
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
+    /* למניעת הסתרת שדות על ידי המקלדת */
     <KeyboardAvoidingView
       className="flex-1 bg-slate-950"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* מאפשר גלילה של המסך במקרה שהמקלדת מכסה את השדות, ומרכז את התוכן אנכית */}
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
         <View className="items-center mb-8">
           <View className="bg-sky-500/10 p-4 rounded-3xl border border-sky-500/20 mb-3">
@@ -107,6 +128,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToRegister }: Lo
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
               />
+              {/* כפתור שמאפשר למשתמש להציג או להסתיר את הסיסמה שהוזנה בשדה הסיסמה */}
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -116,7 +138,8 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToRegister }: Lo
               </TouchableOpacity>
             </View>
           </View>
-
+          
+          {/* כפתור התחברות שמפעיל את הפונקציה handleLogin בעת לחיצה, ומציג אינדיקטור טעינה בזמן שהבקשה לשרת מתבצעת */}
           <TouchableOpacity
             className="bg-sky-600 rounded-xl py-3.5 flex-row items-center justify-center space-x-2"
             onPress={handleLogin}

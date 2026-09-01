@@ -1,3 +1,7 @@
+//מסך סריקת הקישורים הראשי. המשתמש מזין כתובת אתר ולוחץ על כפתור סריקה. האפליקציה פונה ל-
+// API ומציגה כרטיס תוצאות אינטראקטיבי המציג האם הקישור בטוח או מהווה איום, ציון סיכון,
+//  סיווג וסיכום מילולי שהופק על ידי ה-AI.
+
 import React, { useState } from 'react';
 import {
   Text,
@@ -12,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config/api';
 
+// ממשק TypeScript שמגדיר את סוגי התוצאות שהסריקה מחזירה
 interface ScanResult {
   url: string;
   classification: string;
@@ -20,27 +25,39 @@ interface ScanResult {
   isSafe: boolean;
 }
 
+// ממשק TypeScript שמגדיר את סוגי הפרופס שהמסך מקבל
 interface ScanScreenProps {
+  // פונקציה שמופעלת כאשר המשתמש רוצה לעבור למסך היסטוריית הסריקות
   onNavigateToHistory: () => void;
+  // פונקציה שמופעלת כאשר המשתמש רוצה להתנתק מהחשבון
   onLogout: () => void;
 }
 
+// פונקציה React שמייצגת את מסך הסריקה
 export default function ScanScreen({ onNavigateToHistory, onLogout }: ScanScreenProps) {
+  // הגדרת מצבים (States) לניהול שדה הקלט של ה-URL, מצב טעינה ותוצאות הסריקה
   const [url, setUrl] = useState('');
+  // מצב שמציין אם הבקשה לשרת נמצאת בתהליך טעינה
   const [isLoading, setIsLoading] = useState(false);
+  // מצב שמכיל את תוצאות הסריקה שהתקבלו מהשרת
   const [result, setResult] = useState<ScanResult | null>(null);
-
+  
+  // פונקציה אסינכרונית שמטפלת בתהליך הסריקה
   const handleScan = async () => {
+    // בדיקה אם שדה הקלט ריק, ואם כן מציג הודעת שגיאה למשתמש ומפסיק את התהליך
     if (!url.trim()) {
       Alert.alert('Invalid URL', 'Please enter a valid web link to analyze.');
       return;
     }
-
+    // עדכון מצב הטעינה כדי להציג אינדיקטור טעינה למשתמש בזמן שהבקשה לשרת מתבצעת
     setIsLoading(true);
+    // איפוס תוצאות הסריקה הקודמות כדי להציג רק את התוצאה החדשה
     setResult(null);
 
     try {
+      // חילוץ הטוקן המאומת מה-AsyncStorage
       const token = await AsyncStorage.getItem('userToken');
+      // ביצוע בקשת Fetch לשרת ה-Backend עם כתובת האתר שהוזנה על ידי המשתמש
       const response = await fetch(`${API_BASE_URL}/scans`, {
         method: 'POST',
         headers: {
@@ -48,15 +65,16 @@ export default function ScanScreen({ onNavigateToHistory, onLogout }: ScanScreen
           'bypass-tunnel-reminder': 'true',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        // המרת כתובת האתר שהוזנה למחרוזת JSON כדי לשלוח אותה בבקשה
         body: JSON.stringify({ url: url.trim() }),
       });
-
+      // המרת התשובה ל-JSON ובדיקת הצלחת הבקשה. אם הבקשה נכשלה, זורק שגיאה עם הודעה מתאימה
       const data = await response.json();
-
+      // אם הבקשה נכשלה, זורק שגיאה עם הודעה מתאימה
       if (!response.ok) {
         throw new Error(data.message || 'Scan failed.');
       }
-
+      // אם הבקשה הצליחה, מעדכן את מצב התוצאות עם הנתונים שהתקבלו מהשרת
       const scanData = data.scan;
       setResult({
         url: scanData.url,
@@ -66,12 +84,14 @@ export default function ScanScreen({ onNavigateToHistory, onLogout }: ScanScreen
         isSafe: scanData.classification === 'Safe',
       });
     } catch (error: any) {
+      // אם הבקשה נכשלה, מציג הודעת שגיאה למשתמש עם ההודעה שהתקבלה מהשרת או הודעה כללית
       Alert.alert('Scan Failed', error.message || 'Unable to analyze the URL.');
     } finally {
+      // בסיום הבקשה, גם אם נכשלה, מעדכן את מצב הטעינה כדי להפסיק את האנימציה של אינדיקטור הטעינה
       setIsLoading(false);
     }
   };
-
+ 
   return (
     <ScrollView className="flex-1 bg-slate-950" contentContainerStyle={{ padding: 20 }}>
       {/* Header */}
@@ -130,7 +150,6 @@ export default function ScanScreen({ onNavigateToHistory, onLogout }: ScanScreen
         </TouchableOpacity>
       </View>
 
-      
       {result && (
         <View
           className={`rounded-2xl p-5 border mb-6 ${
