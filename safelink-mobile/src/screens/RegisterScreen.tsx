@@ -123,7 +123,7 @@ export default function RegisterScreen({ onRegisterSuccess, onNavigateToLogin }:
               <Ionicons name="mail-outline" size={18} color="#64748b" />
               <TextInput
                 className="flex-1 text-slate-50 text-sm ml-2"
-                placeholder="operator@safelink.io"
+                placeholder="example@email.com"
                 placeholderTextColor="#64748b"
                 value={email}
                 onChangeText={setEmail}

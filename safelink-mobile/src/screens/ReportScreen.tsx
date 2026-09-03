@@ -278,7 +278,7 @@ export default function ReportScreen() {
         </View>
 
         <View className="mb-4">
-          <Text className="text-xs font-semibold text-slate-300 mb-2">Incident Details / Comments</Text>
+          <Text className="text-xs font-semibold text-slate-300 mb-2">Comments</Text>
           <TextInput
             className="bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-50 text-sm h-24"
             placeholder="Describe why this link is dangerous..."

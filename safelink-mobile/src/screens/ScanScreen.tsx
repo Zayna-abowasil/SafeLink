@@ -101,7 +101,7 @@ export default function ScanScreen({ onNavigateToHistory, onLogout }: ScanScreen
             <Ionicons name="shield-checkmark" size={24} color="#38bdf8" />
           </View>
           <View>
-            <Text className="text-2xl font-bold text-sky-400">SafeLink AI</Text>
+            <Text className="text-2xl font-bold text-sky-400">SafeLink </Text>
             <Text className="text-xs text-slate-400">Real-Time Threat Scanner</Text>
           </View>
         </View>
@@ -118,7 +118,7 @@ export default function ScanScreen({ onNavigateToHistory, onLogout }: ScanScreen
       {/* Input Card */}
       <View className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-5">
         <Text className="text-base font-bold text-slate-50 mb-1">Analyze Target URL</Text>
-        <Text className="text-xs text-slate-400 mb-4">Paste suspicious link below to scan with OpenAI models</Text>
+        <Text className="text-xs text-slate-400 mb-4">Paste suspicious link below to scan </Text>
 
         <View className="flex-row items-center bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 mb-4">
           <Ionicons name="link-outline" size={18} color="#64748b" />
@@ -144,7 +144,7 @@ export default function ScanScreen({ onNavigateToHistory, onLogout }: ScanScreen
           ) : (
             <>
               <Ionicons name="scan-outline" size={20} color="#ffffff" />
-              <Text className="text-white font-bold text-base ml-2">Run AI Security Scan</Text>
+              <Text className="text-white font-bold text-base ml-2"> Scan Link</Text>
             </>
           )}
         </TouchableOpacity>

@@ -91,7 +91,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToRegister }: Lo
             <Ionicons name="shield-checkmark" size={44} color="#38bdf8" />
           </View>
           <Text className="text-3xl font-black text-sky-400 tracking-wider">SafeLink</Text>
-          <Text className="text-xs text-slate-400 mt-1.5">Threat Intelligence & Link Security</Text>
+          <Text className="text-xs text-slate-400 mt-1.5">Real-Time Threat Scanner</Text>
         </View>
 
         <View className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
@@ -104,7 +104,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToRegister }: Lo
               <Ionicons name="mail-outline" size={18} color="#64748b" className="mr-2" />
               <TextInput
                 className="flex-1 text-slate-50 text-sm ml-2"
-                placeholder="operator@safelink.io"
+                placeholder="example@email.com"
                 placeholderTextColor="#64748b"
                 value={email}
                 onChangeText={setEmail}
